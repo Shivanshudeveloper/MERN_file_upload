@@ -42,6 +42,7 @@ const FileUpload = () => {
                 const fileName = file.name;
                 setUploadedFile({ fileName, filePath });
                 setMessage('File Successfully Uploaded to Server');
+                setTimeout(() => setUploadPercentage(0), 10000);
             });
         });
             
