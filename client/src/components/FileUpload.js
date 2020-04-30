@@ -3,6 +3,9 @@ import axios from "axios";
 
 import Message from "./Message";
 import ProgressBar from "./Progress";
+import { storage } from '../Firebase/index';
+
+
 
 const FileUpload = () => {
     const [file, setFile] = useState('');
@@ -22,29 +25,58 @@ const FileUpload = () => {
         const formData = new FormData();
         formData.append('file', file);
 
-        try {
-            const res = await axios.post('/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
-                // Progress Event
-                onUploadProgress: progressEvent => {
-                    setUploadPercentage(parseInt(Math.round(progressEvent.loaded * 100) / progressEvent.total));
-                    // Clear the Percentage of Progress Bar
-                    setTimeout(() => setUploadPercentage(0), 10000);
-                },
+        const uploadTask = storage.ref(`images/${file.name}`).put(file);
+
+        uploadTask.on('state_changed', (snapshot) => {
+            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            setUploadPercentage(progress);
+        },
+        (error) => {
+            console.log(error);
+            setMessage(error);
+        },
+        () => {
+            // complete function ....
+            storage.ref('images').child(file.name).getDownloadURL().then(filePath => {
+                console.log(filePath);
+                const fileName = file.name;
+                setUploadedFile({ fileName, filePath });
+                setMessage('File Successfully Uploaded to Server');
             });
-            const { fileName, filePath } = res.data;
-            // Uploading the file to the directory
-            setUploadedFile({ fileName, filePath });
-            setMessage('File Successfully Uploaded to Server');
-        } catch (err) {
-            if (err.response.status === 500) {
-                setMessage('There was a problem with the server');
-            } else {
-                setMessage(err.response.data.msg);
-            }
-        }
+        });
+            
+
+
+
+        // var storageRef = firebase.storage().ref('pictures/Goverment_Department/'+file.name);
+        // var task = storageRef.put(file);
+
+        
+
+
+        // try {
+        //     const res = await axios.post('/upload', formData, {
+        //         headers: {
+        //             'Content-Type': 'multipart/form-data'
+        //         },
+        //         // Progress Event
+        //         onUploadProgress: progressEvent => {
+        //             setUploadPercentage(parseInt(Math.round(progressEvent.loaded * 100) / progressEvent.total));
+        //             // Clear the Percentage of Progress Bar
+        //             setTimeout(() => setUploadPercentage(0), 10000);
+        //         },
+        //     });
+        //     const { fileName, filePath } = res.data;
+        //     // Uploading the file to the directory
+        //     setUploadedFile({ fileName, filePath });
+        //     setMessage('File Successfully Uploaded to Server');
+        // } catch (err) {
+        //     if (err.response.status === 500) {
+        //         setMessage('There was a problem with the server');
+        //     } else {
+        //         setMessage(err.response.data.msg);
+        //     }
+        // }
     }
 
 
